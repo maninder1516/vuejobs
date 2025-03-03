@@ -3,11 +3,18 @@
 import { RouterLink } from 'vue-router';
 import JobListing from './JobListing.vue';
 //import jobData from '@/jobs.json';
-import { ref, defineProps, onMounted } from 'vue';
+//import { ref, defineProps, onMounted } from 'vue';
+import { reactive, defineProps, onMounted } from 'vue';
 import axios from 'axios';
+import PulseLoader from 'vue-spinner/src/PulseLoader.vue';
 
 //const jobs = ref(jobData);
-const jobs = ref([]);
+//const jobs = ref([]);
+const state = reactive({
+    jobs : [],
+    isLoading : true
+});
+
 
 defineProps({
     limit: Number,
@@ -19,10 +26,14 @@ defineProps({
 
 onMounted(async () => {
     try {
-        const response = await axios.get('http://localhost:5000/jobs');
-        jobs.value = response.data;
+        const response = await axios.get('/api/jobs');
+        //jobs.value = response.data;
+
+        state.jobs = response.data;
     } catch(error){
         console.error('Error fetching the Jobs', error);
+    } finally {
+        state.isLoading = false;
     }
 });
 </script>
@@ -34,11 +45,22 @@ onMounted(async () => {
             <h2 class="text-3xl font-bold text-green-500 mb-6 text-center">
             Browse Jobs
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <JobListing v-for="job in jobs.slice(0, limit || jobs.length)" 
+            <!-- Show Loading Splinner while loading is true  -->
+            <div v-if="state.isLoading" class="text-center text-gray-500 py-6">
+                <PulseLoader />
+            </div>
+
+            <!-- Show job listing when done  -->
+            <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <JobListing v-for="job in state.jobs.slice(0, limit || state.jobs.length)" 
                     :key="job.id" 
                     :job="job" 
                 />
+
+                <!-- <JobListing v-for="job in jobs.slice(0, limit || jobs.length)" 
+                    :key="job.id" 
+                    :job="job" 
+                /> -->
 
                 <!-- <div v-for="job in jobs" :key="job.id" class="bg-white rounded-lg shadow-md p-4">
                     {{ job.title }}
